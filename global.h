@@ -19,6 +19,10 @@
 // Realloc Smart List: 2
 #define SMART_LIST_MODE 2
 
+// Calling an external function: 1
+// Expression built in IR: 2
+#define INSTR_INC_MODE 2
+
 #define IGD_(str) VGAPPEND(vginstrgrind_,str)
 
 #define IGD_DEBUGIF(x) if (0)

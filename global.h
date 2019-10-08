@@ -45,6 +45,7 @@ typedef struct _SmartHash		SmartHash;
 typedef struct _SmartList		SmartList;
 typedef struct _SmartValue		SmartValue;
 typedef struct _SmartSeek		SmartSeek;
+typedef struct _InstrGroup		InstrGroup;
 typedef struct _UniqueInstr 	UniqueInstr;
 
 struct _SmartValue {
@@ -53,11 +54,34 @@ struct _SmartValue {
 	SmartValue* next;
 };
 
+struct _InstrGroup {
+	ULong exec_count;  // The number of times this group was executed.
+	SmartList* instrs; // The list of instructions of this group.
+};
+
 struct _UniqueInstr {
 	Addr addr;
 	Int size;
 	ULong exec_count; // The number of times this instruction was executed.
 };
+
+/* from groups.c */
+void IGD_(init_groups_pool)(void);
+void IGD_(destroy_groups_pool)(void);
+InstrGroup* IGD_(new_group)(void);
+void IGD_(flush_group)(InstrGroup* group);
+
+/* from instrs.c */
+void IGD_(init_instrs_pool)(void);
+void IGD_(destroy_instrs_pool)(void);
+UniqueInstr* IGD_(get_instr)(Addr addr, Int size);
+UniqueInstr* IGD_(find_instr)(Addr addr);
+Addr IGD_(instr_addr)(UniqueInstr* instr);
+Int IGD_(instr_size)(UniqueInstr* instr);
+Bool IGD_(instrs_cmp)(UniqueInstr* i1, UniqueInstr* i2);
+void IGD_(print_instr)(UniqueInstr* instr);
+void IGD_(fprint_instr)(VgFile* fp, UniqueInstr* instr);
+void IGD_(dump_instrs)(const HChar* filename);
 
 /* from smarthash.c */
 SmartHash* IGD_(new_smart_hash)(Int size);
@@ -107,17 +131,5 @@ Bool IGD_(smart_list_has_next)(SmartSeek* ss);
 void IGD_(smart_list_next)(SmartSeek* ss);
 void* IGD_(smart_list_get_value)(SmartSeek* ss);
 void IGD_(smart_list_set_value)(SmartSeek* ss, void* value);
-
-/* from instrs.c */
-void IGD_(init_instrs_pool)(void);
-void IGD_(destroy_instrs_pool)(void);
-UniqueInstr* IGD_(get_instr)(Addr addr, Int size);
-UniqueInstr* IGD_(find_instr)(Addr addr);
-Addr IGD_(instr_addr)(UniqueInstr* instr);
-Int IGD_(instr_size)(UniqueInstr* instr);
-Bool IGD_(instrs_cmp)(UniqueInstr* i1, UniqueInstr* i2);
-void IGD_(print_instr)(UniqueInstr* instr);
-void IGD_(fprint_instr)(VgFile* fp, UniqueInstr* instr);
-void IGD_(dump_instrs)(const HChar* filename);
 
 #endif

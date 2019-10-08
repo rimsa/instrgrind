@@ -50,15 +50,15 @@ struct {
 
 #if defined(USING_INSTR_CALLBACK)
 static VG_REGPARM(1)
-void IGD_(count_instr)(UniqueInstr* instr) {
-	++instr->exec_count;
+void IGD_(count_group)(InstrGroup* group) {
+	++group->exec_count;
 }
 
 static
-void IGD_(add_increment_callback)(IRSB* sbOut, UniqueInstr* instr) {
-	addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "count_instr",
-					VG_(fnptr_to_fnentry)(IGD_(count_instr)),
-					mkIRExprVec_1(mkIRExpr_HWord((HWord) instr)))));
+void IGD_(add_increment_callback)(IRSB* sbOut, InstrGroup* group) {
+	addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "count_group",
+					VG_(fnptr_to_fnentry)(IGD_(count_group)),
+					mkIRExprVec_1(mkIRExpr_HWord((HWord) group)))));
 }
 #elif defined(USING_INSTR_EXPR)
 static
@@ -125,6 +125,7 @@ void IGD_(print_debug_usage)(void) {
 static
 void IGD_(post_clo_init)(void) {
 	IGD_(init_instrs_pool)();
+	IGD_(init_groups_pool)();
 }
 
 static
@@ -132,7 +133,10 @@ IRSB* IGD_(instrument)(VgCallbackClosure* closure, IRSB* sbIn,
          const VexGuestLayout* layout,  const VexGuestExtents* vge,
          const VexArchInfo* archinfo_host, IRType gWordTy, IRType hWordTy) {
 	Int i;
+	UniqueInstr* instr;
+	InstrGroup* group;
 	IRSB* sbOut;
+	IRStmt* st;
 
 	// We don't currently support this case
 	if (gWordTy != hWordTy)
@@ -149,10 +153,8 @@ IRSB* IGD_(instrument)(VgCallbackClosure* closure, IRSB* sbIn,
 	}
 
 	// Copy instructions to new superblock
+	group = 0;
 	for (/*use current i*/; i < sbIn->stmts_used; i++) {
-		IRStmt* st;
-		UniqueInstr* instr;
-
 		st = sbIn->stmts[i];
 		if (!st || st->tag == Ist_NoOp)
 			continue;
@@ -161,12 +163,20 @@ IRSB* IGD_(instrument)(VgCallbackClosure* closure, IRSB* sbIn,
 
 		switch (st->tag) {
 			case Ist_IMark:
-				instr = IGD_(get_instr)(st->Ist.IMark.addr, st->Ist.IMark.len);
+				if (group == 0) {
+					group = IGD_(new_group)();
 #if defined(USING_INSTR_CALLBACK)
-				IGD_(add_increment_callback)(sbOut, instr);
+					IGD_(add_increment_callback)(sbOut, group);
 #elif defined(USING_INSTR_EXPR)
-				IGD_(add_increment_expr)(sbOut, hWordTy, &(instr->exec_count));
+					IGD_(add_increment_expr)(sbOut, hWordTy, &(group->exec_count));
 #endif
+				}
+
+				instr = IGD_(get_instr)(st->Ist.IMark.addr, st->Ist.IMark.len);
+				IGD_(smart_list_add)(group->instrs, instr);
+				break;
+			case Ist_Exit:
+				group = 0;
 				break;
 			default:
 				break;
@@ -177,6 +187,8 @@ IRSB* IGD_(instrument)(VgCallbackClosure* closure, IRSB* sbIn,
 }
 
 static void IGD_(fini)(Int exitcode) {
+	IGD_(destroy_groups_pool)();
+
 	if (IGD_(clo).instrs_outfile)
 		IGD_(dump_instrs)(IGD_(clo).instrs_outfile);
 

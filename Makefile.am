@@ -12,6 +12,7 @@ noinst_PROGRAMS += instrgrind-@VGCONF_ARCH_SEC@-@VGCONF_OS@
 endif
 
 INSTRGRIND_SOURCES_COMMON = \
+	groups.c \
 	instrs.c \
 	main.c \
 	smarthash.c \

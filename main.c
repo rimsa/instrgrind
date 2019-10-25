@@ -30,6 +30,7 @@
 
 struct {
 	const HChar* instrs_outfile;
+	const HChar* mappings_outfile;
 } IGD_(clo);
 
 #if defined(VG_BIGENDIAN)
@@ -95,12 +96,14 @@ void IGD_(add_increment_expr)(IRSB* sbOut, IRType tyW, ULong* ptr) {
 static
 void IGD_(clo_set_defaults)() {
 	IGD_(clo).instrs_outfile = 0;
+	IGD_(clo).mappings_outfile = 0;
 }
 
 static
 Bool IGD_(process_cmd_line_option)(const HChar* arg) {
 	if (False) {}
 	else if VG_STR_CLO(arg, "--instrs-outfile", IGD_(clo).instrs_outfile) {}
+	else if VG_STR_CLO(arg, "--mappings-outfile", IGD_(clo).mappings_outfile) {}
 	else
 		return False;
 
@@ -111,7 +114,8 @@ static
 void IGD_(print_usage)(void) {
 	VG_(printf)(
 "\n   instruction options:\n"
-"    --instrs-outfile=<f>             Output file with instructions execution count\n"
+"    --instrs-outfile=<f>      Output file with instructions execution count\n"
+"    --mappings-outfile=<f>    Output file with memory mappings (bin, libs, ...)\n"
 	);
 }
 
@@ -174,6 +178,7 @@ IRSB* IGD_(instrument)(VgCallbackClosure* closure, IRSB* sbIn,
 
 				instr = IGD_(get_instr)(st->Ist.IMark.addr, st->Ist.IMark.len);
 				IGD_(smart_list_add)(group->instrs, instr);
+
 				break;
 			case Ist_Exit:
 				group = 0;
@@ -186,11 +191,44 @@ IRSB* IGD_(instrument)(VgCallbackClosure* closure, IRSB* sbIn,
 	return sbOut;
 }
 
+static
+void dump_mappings(const HChar* filename) {
+	VgFile* outfile;
+	const DebugInfo* di;
+
+	outfile = VG_(fopen)(filename, VKI_O_WRONLY|VKI_O_TRUNC, 0);
+	if (outfile == 0) {
+		outfile = VG_(fopen)(filename, VKI_O_CREAT|VKI_O_WRONLY,
+										VKI_S_IRUSR|VKI_S_IWUSR);
+	}
+	IGD_ASSERT(outfile != 0);
+
+	for (di = VG_(next_DebugInfo)(0); di; di = VG_(next_DebugInfo)(di)) {
+		Addr addr;
+		SizeT size;
+
+		addr = VG_(DebugInfo_get_text_avma)(di);
+		if (!addr)
+			continue;
+
+		size = VG_(DebugInfo_get_text_size)(di);
+		IGD_ASSERT(size > 0);
+
+		VG_(fprintf)(outfile, "%s:0x%lx:%lu\n",
+			VG_(DebugInfo_get_filename)(di), addr, size);
+	}
+
+	VG_(fclose)(outfile);
+}
+
 static void IGD_(fini)(Int exitcode) {
 	IGD_(destroy_groups_pool)();
 
 	if (IGD_(clo).instrs_outfile)
 		IGD_(dump_instrs)(IGD_(clo).instrs_outfile);
+
+	if (IGD_(clo).mappings_outfile)
+		dump_mappings(IGD_(clo).mappings_outfile);
 
 	IGD_(destroy_instrs_pool)();
 }

@@ -94,7 +94,7 @@ void IGD_(add_increment_expr)(IRSB* sbOut, IRType tyW, ULong* ptr) {
 #endif
 
 static
-void IGD_(clo_set_defaults)() {
+void IGD_(clo_set_defaults)(void) {
 	IGD_(clo).instrs_outfile = 0;
 	IGD_(clo).mappings_outfile = 0;
 }

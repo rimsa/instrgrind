@@ -113,7 +113,7 @@ Bool dump_instr(UniqueInstr* instr, VgFile* outfile) {
 	IGD_ASSERT(instr != 0);
 	IGD_ASSERT(outfile != 0);
 
-	VG_(fprintf)(outfile, "0x%lx:%u:%llu\n", instr->addr, instr->size, instr->exec_count);
+	VG_(fprintf)(outfile, "0x%lx:%d:%llu\n", instr->addr, instr->size, instr->exec_count);
 
 	return False;
 }

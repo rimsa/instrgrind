@@ -29,6 +29,8 @@
 #include "global.h"
 
 struct {
+	const HChar* instrs_infile;
+	Bool ignore_failed;
 	const HChar* instrs_outfile;
 	const HChar* mappings_outfile;
 } IGD_(clo);
@@ -95,6 +97,8 @@ void IGD_(add_increment_expr)(IRSB* sbOut, IRType tyW, ULong* ptr) {
 
 static
 void IGD_(clo_set_defaults)(void) {
+	IGD_(clo).instrs_infile = 0;
+	IGD_(clo).ignore_failed = False;
 	IGD_(clo).instrs_outfile = 0;
 	IGD_(clo).mappings_outfile = 0;
 }
@@ -102,6 +106,9 @@ void IGD_(clo_set_defaults)(void) {
 static
 Bool IGD_(process_cmd_line_option)(const HChar* arg) {
 	if (False) {}
+	else if VG_STR_CLO(arg, "--instrs-infile", IGD_(clo).instrs_infile) {}
+	else if VG_BOOL_CLO(arg, "--ignore-failed-instrs", IGD_(clo).ignore_failed) {}
+
 	else if VG_STR_CLO(arg, "--instrs-outfile", IGD_(clo).instrs_outfile) {}
 	else if VG_STR_CLO(arg, "--mappings-outfile", IGD_(clo).mappings_outfile) {}
 	else
@@ -114,8 +121,10 @@ static
 void IGD_(print_usage)(void) {
 	VG_(printf)(
 "\n   instruction options:\n"
-"    --instrs-outfile=<f>      Output file with instructions execution count\n"
-"    --mappings-outfile=<f>    Output file with memory mappings (bin, libs, ...)\n"
+"    --instrs-infile=<f>             Input file with instructions execution count\n"
+"    --ignore-failed-instrs=no|yes   Ignore failed instrunctions input file read [no]\n"
+"    --instrs-outfile=<f>            Output file with instructions execution count\n"
+"    --mappings-outfile=<f>          Output file with memory mappings (bin, libs, ...)\n"
 	);
 }
 
@@ -130,6 +139,17 @@ static
 void IGD_(post_clo_init)(void) {
 	IGD_(init_instrs_pool)();
 	IGD_(init_groups_pool)();
+
+	// read the instructions from file if option is present.
+	if (IGD_(clo).instrs_infile) {
+		Int fd = VG_(fd_open)(IGD_(clo).instrs_infile, VKI_O_RDONLY, 0);
+		if (fd > 0) {
+			IGD_(read_instrs)(fd);
+			VG_(close)(fd);
+		} else {
+			tl_assert(IGD_(clo).ignore_failed);
+		}
+	}
 }
 
 static
@@ -227,10 +247,10 @@ static void IGD_(fini)(Int exitcode) {
 	if (IGD_(clo).instrs_outfile)
 		IGD_(dump_instrs)(IGD_(clo).instrs_outfile);
 
+	IGD_(destroy_instrs_pool)();
+
 	if (IGD_(clo).mappings_outfile)
 		dump_mappings(IGD_(clo).mappings_outfile);
-
-	IGD_(destroy_instrs_pool)();
 }
 
 static void IGD_(pre_clo_init)(void) {

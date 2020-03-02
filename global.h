@@ -81,6 +81,7 @@ Int IGD_(instr_size)(UniqueInstr* instr);
 Bool IGD_(instrs_cmp)(UniqueInstr* i1, UniqueInstr* i2);
 void IGD_(print_instr)(UniqueInstr* instr);
 void IGD_(fprint_instr)(VgFile* fp, UniqueInstr* instr);
+void IGD_(read_instrs)(Int fd);
 void IGD_(dump_instrs)(const HChar* filename);
 
 /* from smarthash.c */

@@ -30,6 +30,21 @@
 
 #define DEFAULT_POOL_SIZE 262144 // 256k instructions
 
+struct {
+	enum {
+		TKN_COLON,
+		TKN_ADDR,
+		TKN_NUMBER
+	} type;
+
+	union {
+		Addr addr;
+		ULong number;
+	} data;
+
+	HChar text[1024];
+} token;
+
 SmartHash* instrs_pool = 0;
 
 static
@@ -106,6 +121,144 @@ void IGD_(fprint_instr)(VgFile* fp, UniqueInstr* instr) {
 	IGD_ASSERT(instr != 0);
 
 	VG_(fprintf)(fp, "0x%lx [%d]", instr->addr, instr->size);
+}
+
+static
+Bool next_token(Int fd) {
+	Int idx, state;
+	static Int last = -1;
+
+	idx = 0;
+	VG_(memset)(&token, 0, sizeof(token));
+
+	state = 1;
+	while (state != 6) {
+		Int c;
+
+		IGD_ASSERT(idx >= 0 && idx < ((sizeof(token.text) / sizeof(HChar))-1));
+		if (last == -1) {
+			Int s;
+			HChar tmp;
+
+			s = VG_(read)(fd, &tmp, 1);
+			c = s < 1 ? -1 : tmp;
+		} else {
+			c = last;
+			last = -1;
+		}
+
+		switch (state) {
+			case 1:
+				if (c == -1) {
+					return False;
+				} else if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
+					state = 1;
+				} else if (c == '0') {
+					token.text[idx++] = c;
+					token.type = TKN_NUMBER;
+					token.data.number = 0;
+					state = 2;
+				} else if (c >= '1' && c <= '9') {
+					token.text[idx++] = c;
+					token.type = TKN_NUMBER;
+					state = 4;
+				} else if (c == '#') {
+					state = 5;
+				} else if (c == ':') {
+					token.text[idx++] = c;
+					token.type = TKN_COLON;
+					state = 6;
+				} else {
+					tl_assert(0);
+				}
+
+				break;
+			case 2:
+				if (VG_(tolower)(c) == 'x') {
+					token.text[idx++] = VG_(tolower)(c);
+					token.type = TKN_ADDR;
+					state = 3;
+				} else {
+					if (c != -1)
+						last = c;
+
+					state = 6;
+				}
+
+				break;
+			case 3:
+				if ((c >= '0' && c <= '9') ||
+						(VG_(tolower)(c) >= 'a' && VG_(tolower)(c) <= 'f')) {
+					token.text[idx++] = VG_(tolower)(c);
+					state = 3;
+				} else {
+					token.data.addr = VG_(strtoull16)(token.text, 0);
+
+					if (c != -1)
+						last = c;
+
+					state = 6;
+				}
+
+				break;
+			case 4:
+				if (c >= '0' && c <= '9') {
+					token.text[idx++] = c;
+					state = 4;
+				} else {
+					token.data.number = VG_(strtoull10)(token.text, 0);
+
+					if (c != -1)
+						last = c;
+
+					state = 6;
+				}
+
+				break;
+			case 5:
+				if (c == -1 || c == '\n')
+					state = 1;
+				else
+					state = 5;
+
+				break;
+			default:
+				tl_assert(0);
+		}
+	}
+
+	return True;
+}
+
+
+void IGD_(read_instrs)(Int fd) {
+	Addr addr;
+	Int size;
+	Bool has;
+	UniqueInstr* instr;
+
+	while (next_token(fd)) {
+		IGD_ASSERT(token.type == TKN_ADDR);
+		addr = token.data.addr;
+
+		has = next_token(fd);
+		IGD_ASSERT(has && token.type == TKN_COLON);
+
+		has = next_token(fd);
+		IGD_ASSERT(has && token.type == TKN_NUMBER);
+		size = (Int) token.data.number;
+		IGD_ASSERT(size > 0);
+
+		instr = IGD_(get_instr)(addr, size);
+		IGD_ASSERT(instr != 0);
+
+		has = next_token(fd);
+		IGD_ASSERT(has && token.type == TKN_COLON);
+
+		has = next_token(fd);
+		IGD_ASSERT(has && token.type == TKN_NUMBER);
+		instr->exec_count += token.data.number;
+	}
 }
 
 static

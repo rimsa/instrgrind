@@ -6,7 +6,7 @@
 /*
    This file is part of instrgrind, a dynamic instruction tracker tool.
 
-   Copyright (C) 2019, Andrei Rimsa (andrei@cefetmg.br)
+   Copyright (C) 2023, Andrei Rimsa (andrei@cefetmg.br)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -258,7 +258,7 @@ static void IGD_(pre_clo_init)(void) {
 	VG_(details_version)         (NULL);
 	VG_(details_description)     ("a dynamic instruction tracker tool");
 	VG_(details_copyright_author)(
-	"Copyright (C) 2019, and GNU GPL'd, by Andrei Rimsa.");
+	"Copyright (C) 2023, and GNU GPL'd, by Andrei Rimsa.");
 	VG_(details_bug_reports_to)  (VG_BUGS_TO);
 
 	VG_(details_avg_translation_sizeB) ( 275 );

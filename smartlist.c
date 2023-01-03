@@ -6,7 +6,7 @@
 /*
    This file is part of instrgrind, a dynamic instruction tracker tool.
 
-   Copyright (C) 2019, Andrei Rimsa (andrei@cefetmg.br)
+   Copyright (C) 2023, Andrei Rimsa (andrei@cefetmg.br)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as

@@ -1,18 +1,6 @@
-diff -urN a/configure.ac b/configure.ac
---- a/configure.ac	2023-04-28 12:28:21.000000000 -0300
-+++ b/configure.ac	2023-06-02 09:35:56.729323959 -0300
-@@ -5420,6 +5420,8 @@
-    callgrind/tests/Makefile
-    helgrind/Makefile
-    helgrind/tests/Makefile
-+   instrgrind/Makefile
-+   instrgrind/tests/Makefile
-    drd/Makefile
-    drd/scripts/download-and-build-splash2
-    drd/tests/Makefile
 diff -urN a/Makefile.am b/Makefile.am
---- a/Makefile.am	2023-01-07 11:48:51.000000000 -0300
-+++ b/Makefile.am	2023-06-02 09:35:56.729323959 -0300
+--- a/Makefile.am	2023-10-31 14:25:52.000000000 -0300
++++ b/Makefile.am	2025-01-17 17:36:01.472798936 -0300
 @@ -8,6 +8,7 @@
  		cachegrind \
  		callgrind \
@@ -21,3 +9,15 @@ diff -urN a/Makefile.am b/Makefile.am
  		drd \
  		massif \
  		dhat \
+diff -urN a/configure.ac b/configure.ac
+--- a/configure.ac	2023-10-31 14:25:52.000000000 -0300
++++ b/configure.ac	2025-01-17 17:36:01.472798936 -0300
+@@ -5527,6 +5527,8 @@
+    callgrind/tests/Makefile
+    helgrind/Makefile
+    helgrind/tests/Makefile
++   instrgrind/Makefile
++   instrgrind/tests/Makefile
+    drd/Makefile
+    drd/scripts/download-and-build-splash2
+    drd/tests/Makefile

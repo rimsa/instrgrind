@@ -5,14 +5,14 @@ is executed during a program run.
 
 ## Building
 
-To build instrgrind, first download and unpack valgrind (3.23.0):
+To build instrgrind, first download and unpack valgrind (3.24.0):
 
-    $ wget -qO - https://sourceware.org/pub/valgrind/valgrind-3.23.0.tar.bz2 | tar jxv
+    $ wget -qO - https://sourceware.org/pub/valgrind/valgrind-3.24.0.tar.bz2 | tar jxv
 
 Then, enter directory and clone instrgrind github repository.
 Apply a patch to add the tool in the compilation chain.
 
-    $ cd valgrind-3.23.0
+    $ cd valgrind-3.24.0
     $ git clone https://github.com/rimsa/instrgrind.git instrgrind
     $ patch -p1 < instrgrind/instrgrind.patch
 

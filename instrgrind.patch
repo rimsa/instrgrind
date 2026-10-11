@@ -1,6 +1,6 @@
 diff -urN a/Makefile.am b/Makefile.am
---- a/Makefile.am	2025-10-24 15:43:21.000000000 -0300
-+++ b/Makefile.am	2026-01-21 16:48:12.602462982 -0300
+--- a/Makefile.am	2026-05-20 09:43:24
++++ b/Makefile.am	2026-10-11 08:39:48
 @@ -10,6 +10,7 @@
  		cachegrind \
  		callgrind \
@@ -10,9 +10,9 @@ diff -urN a/Makefile.am b/Makefile.am
  		massif \
  		dhat \
 diff -urN a/configure.ac b/configure.ac
---- a/configure.ac	2025-10-24 15:43:21.000000000 -0300
-+++ b/configure.ac	2026-01-21 16:48:12.602462982 -0300
-@@ -5808,6 +5808,8 @@
+--- a/configure.ac	2026-05-20 09:47:44
++++ b/configure.ac	2026-10-11 08:39:48
+@@ -6043,6 +6043,8 @@
     callgrind/tests/Makefile
     helgrind/Makefile
     helgrind/tests/Makefile

@@ -124,7 +124,9 @@ void IGD_(print_usage)(void) {
 "    --instrs-infile=<f>             Input file with instructions execution count\n"
 "    --ignore-failed-instrs=no|yes   Ignore failed instrunctions input file read [no]\n"
 "    --instrs-outfile=<f>            Output file with instructions execution count\n"
+"                use %%p to bind the pid to the output file (e.g. instrgrind-%%p.cfg)\n"
 "    --mappings-outfile=<f>          Output file with memory mappings (bin, libs, ...)\n"
+"                use %%p to bind the pid to the mappings file (e.g. mappings-%%p.cfg)\n"
 	);
 }
 
@@ -242,15 +244,25 @@ void dump_mappings(const HChar* filename) {
 }
 
 static void IGD_(fini)(Int exitcode) {
+	HChar* filename;
+
 	IGD_(destroy_groups_pool)();
 
-	if (IGD_(clo).instrs_outfile)
-		IGD_(dump_instrs)(IGD_(clo).instrs_outfile);
+	if (IGD_(clo).instrs_outfile) {
+		filename = VG_(expand_file_name)("--instrs-outfile",
+						IGD_(clo).instrs_outfile);
+		IGD_(dump_instrs)(filename);
+		VG_(free)(filename);
+	}
 
 	IGD_(destroy_instrs_pool)();
 
-	if (IGD_(clo).mappings_outfile)
-		dump_mappings(IGD_(clo).mappings_outfile);
+	if (IGD_(clo).mappings_outfile) {
+		filename = VG_(expand_file_name)("--mappings-outfile",
+						IGD_(clo).mappings_outfile);
+		dump_mappings(filename);
+		VG_(free)(filename);
+	}
 }
 
 static void IGD_(pre_clo_init)(void) {
